@@ -3,6 +3,11 @@
 #include <sys/epoll.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <errno.h>
+#include <strings.h>
+#include <string.h>
+#include <sys/stat.h>
+
 
 
 int initListedFd(unsigned short port) {
@@ -60,9 +65,10 @@ int epollRun(int lfd) {
 
     // 检测
     struct epoll_event evs[1024];
+    int len = sizeof(evs) / sizeof(struct epoll_event);
     
     while (1) {
-        int num = epoll_wait(epfd, evs, sizeof evs, -1);
+        int num = epoll_wait(epfd, evs, sizeof len, -1);
         for (int i = 0; i < num; i++) {
             int fd = evs[i].data.fd;
             if (fd = lfd) {
@@ -70,6 +76,7 @@ int epollRun(int lfd) {
                 acceptClinent(lfd, epfd);
             } else {
                 // 用于通信的套接字，接收对端的数据
+                recvHttpRequest(fd, epfd);
             }
         }
     }
@@ -105,5 +112,69 @@ int acceptClinent(int lfd, int epfd) {
 
 }
 
+int recvHttpRequest(int cfd, int epfd) {
+    int len = 0;
+    int total = 0;
+    char tmp[1024] = {0};
+    char buf[4096] = {0};
 
+    while ((len = recv(cfd, tmp, sizeof tmp, 0)) > 0) {
+        if (total + len < sizeof buf) {
+            memcopy(buf + total, tmp, len);
+        }
+        total += len;
+    }
+
+    // 判断数据是否被接受完了
+    if (len == -1 && errno == EAGAIN) {
+        // 解析请求行
+
+    } else if (len == 0) {
+        // 客户端断开了连接
+        epoll_ctl(epfd, EPOLL_CTL_DEL, cfd, NULL);
+        close(cfd);
+    } else {
+        prroer("recv");
+        return -1;
+    }
+}
+
+
+int parseRequestLine(const char* line, int cfd) {
+    // 解析请求行 get /xxx/1.jpg http/1.1
+    char method[12];
+    char path[1024];
+
+    sscanf(line, "%[^ ] %[^ ]", method, path);
+    if (strcasecmp(method, "get") != 0) {
+        return -1;
+    }
+
+
+    // 处理客户端请求的静态资源（目录或者文件）
+    char* file = NULL;
+    if (strcmp(path, "/") == 0) {
+        file = "./";
+    } else {
+        file = path + 1;
+    }
+
+    // 获取文件属性
+    struct stat st;
+    int ret = stat(file, &st);
+    if (ret == -1) {
+        // 文件不存在 --回复404
+    }
+    // 判断文件类型
+    if (S_ISDIR(st.st_mode)) {  // 如果是目录S_ISDIR()返回1，否则返回0
+        // 把这个目录的内容发送给客户端
+
+    } else {
+        // 把这个文件发送给客户端
+
+    }
+
+
+    return 0;
+}
 
