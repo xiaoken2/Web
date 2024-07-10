@@ -15,3 +15,14 @@ int recvHttpRequest(int cfd, int epfd);
 // 解析请求行
 int parseRequestLine(const char* line, int cfd);
 
+// 发送文件
+int sendFile (const char* fileName, int cfd);
+
+// 发送响应头（状态行和响应行）
+int sendHeadmsg(int cfd, int status, const char* descr, const char* type, int length);
+
+// 根据文件名来获取content-type
+const char* getFileType(const char* name);
+
+// 发送目录
+int sendDir(const char* dirName, int cfd);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+
 #include "Server.h"
 
 int main(int agrv, char* agrc[]) {
@@ -13,7 +14,7 @@ int main(int agrv, char* agrc[]) {
     // 初始化用于监听的套接字
     int lfd = initListedFd(port);
     // 启动epoll
-    int epollRun(int lfd);
+    int epollRun(lfd);
 
     return 0;
 }
