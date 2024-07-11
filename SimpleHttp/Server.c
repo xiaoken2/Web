@@ -234,6 +234,7 @@ int sendDir(const char* dirName, int cfd) {
     struct dirent** namelist;
     int num = scandir(dirName, &namelist, NULL, alphasort);
     for (int i = 0; i < num; ++i) {
+        // 取出的namelist指向的是一个指针数组 struct dirent* tmp[]
         char* name = namelist[i]->d_name;
         struct stat st;
         char subPath[1024] = {0};
@@ -241,13 +242,16 @@ int sendDir(const char* dirName, int cfd) {
         stat(subPath, &st);
 
         if (S_ISDIR(st.st_mode)) {
-            sprintf(buf + strlen(buf),
-                "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>",
-                name, name, st.st_size);
+            // a标签<a href="地址"name</a>> 可以实现跳转到指定子目录
+
+            sprintf(buf + strlen(buf), 
+            "<tr><td><a href=\"%s/\">%s</td><td>%ld</td></tr>", 
+            name, name, st.st_size);
         } else {
-            sprintf(buf + strlen(buf),
-                "<tr><td><a href=\"%s\">%s</a></td><td>%ld</td></tr>",
-                name, name, st.st_size);
+            // 非目录
+            sprintf(buf + strlen(buf), 
+            "<tr><td><a href=\"%s\">%s</td><td>%ld</td></tr>", 
+            name, name, st.st_size);
         }
         send(cfd, buf, strlen(buf), 0);
         memset(buf, 0, sizeof(buf));
@@ -260,21 +264,42 @@ int sendDir(const char* dirName, int cfd) {
 }
 
 int sendFile(const char* fileName, int cfd) {
+    // 1. 打开文件
     int fd = open(fileName, O_RDONLY);
     assert(fd > 0);
+/*
+    while (1) {
+        char buf[1024];
+        int len = read(fd, buf, sizeof buf);
+        if (len > 0) {
+            send(cfd, buf, len, 0);
+            usleep(10); // 防止发送端发送数据太快，接收端处理不过来造成堵塞
+        } else if (len == 0) {
+            break; 
+        } else {
+            perror("read");
+        }
 
+    }
+*/
     int size = lseek(fd, 0, SEEK_END);
     lseek(fd, 0, SEEK_SET);
-    sendfile(cfd, fd, NULL, size);
+    int ret = sendfile(cfd, fd, NULL, size);
+    // printf("%d\n", ret);
+    // if (ret == -1) {
+    //     perror("sendfile");
+    // }
     close(fd);
     return 0;
 }
 
 int sendHeadmsg(int cfd, int status, const char* descr, const char* type, int length) {
     char buf[4096] = {0};
-    sprintf(buf, "HTTP/1.1 %d %s\r\n", status, descr);
-    sprintf(buf + strlen(buf), "Content-Type: %s\r\n", type);
-    sprintf(buf + strlen(buf), "Content-Length: %d\r\n\r\n", length);
+    // 状态行
+    sprintf(buf, "http/1.1 %d %s\r\n", status, descr);
+    // 响应头
+    sprintf(buf + strlen(buf), "content-type: %s\r\n", type);
+    sprintf(buf + strlen(buf), "content-length: %d\r\n\r\n", length);
 
     send(cfd, buf, strlen(buf), 0);
     return 0;
