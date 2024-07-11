@@ -5,7 +5,7 @@ struct EventLoop;
 struct Dispatcher
 {
     // init -- 初始化epoll,poll或者select需要的数据块
-    void (*init)();
+    void* (*init)();
     // 添加
     int (*add)(struct Channel* channel, struct EventLoop* evLoop); //通过EventLoop* evLoop取到不同的epoll,poll或者select需要的数据块
     // 删除

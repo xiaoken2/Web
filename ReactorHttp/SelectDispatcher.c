@@ -103,10 +103,12 @@ static int selectDispatch (struct EventLoop* evLoop, int timeout) { // timeout�
     }
     for (int i = 0; i < Max; ++i) {
         if (FD_ISSET(i, &rdtmp)) {
-            // 
+            // 读事件
+            eventActivate(evLoop, i, ReadEvent);
         }
         if (FD_ISSET(i, &wrtmp)) {
             // 写事件触发
+            eventActivate(evLoop, i, WriteEvent);
         }
     }
     return 0;

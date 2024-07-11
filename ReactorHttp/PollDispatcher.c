@@ -116,7 +116,7 @@ static int pollModify (struct Channel* channel, struct EventLoop* evLoop) {
 
 static int pollDispatch (struct EventLoop* evLoop, int timeout) { // timeout单位 s
     struct PollData* data = (struct PollData*)evLoop->dispatcherData;
-    int count = epoll_wait(data->fds, data->maxfd + 1, Max, timeout * 1000);
+    int count = poll(data->fds, data->maxfd + 1, timeout * 1000);
     if (count == -1) {
         perror("poll");
         exit(0);
@@ -127,10 +127,11 @@ static int pollDispatch (struct EventLoop* evLoop, int timeout) { // timeout单�
         }
         if (data->fds[i].revents & POLLIN) {
             // 读事件触发
-
+            eventActivate(evLoop, data->fds[i].fd, ReadEvent);
         }
         if (data->fds[i].revents & POLLOUT) {
             // 写事件
+            eventActivate(evLoop, data->fds[i].fd, WriteEvent);
         }
     }
     return 0;
