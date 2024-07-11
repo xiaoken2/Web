@@ -26,3 +26,7 @@ const char* getFileType(const char* name);
 
 // 发送目录
 int sendDir(const char* dirName, int cfd);
+
+// 编码来访问中文名字
+int hexToDec(char c);
+void decodeMsg(char* to, char* from);
