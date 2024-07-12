@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include "TcpServer.h"
+#include "TcpConnection.h"
 
 struct TcpServer* tcpServerInit(unsigned short port, int threadNum) {
     struct TcpServer* tcp = (struct TcpServer*)malloc(sizeof(struct TcpServer));
@@ -55,6 +56,9 @@ int acceptConnect(void* arg) {
     int cfd = accept(server->listener->lfd, NULL, NULL);  // 第二参数为连接的客户端的端口和ip地址，不需要这些信息的时候为NULL，第三个参数为第二个参数的结构体大小
     // 从线程池里面取出子线程的反应堆实例
     struct EventLoop* evLoop =  takeWorkerEventLoop(server->threadPool);
+
+    // 将cfd放到TcpConnection中处理
+    tcpConnectionInit(cfd, evLoop);
 
 }
 
