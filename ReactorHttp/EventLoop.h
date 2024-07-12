@@ -10,7 +10,7 @@ extern struct Dispatcher PollDispatcher;
 extern struct Dispatcher SelectDispatcher;
 
 // 处理节点中的channel
-enum ElemType{ADD, DELECT, MODIFY};
+enum ElemType{ADD, DELETE, MODIFY};
 
 // 定义任务节点
 struct ChannelElement
@@ -36,6 +36,10 @@ struct EventLoop{
     pthread_t threadID;
     char threadName[32];
     pthread_mutex_t mutex;
+
+    // 用于唤醒阻塞中的子线程
+    // 用于存储初始化的两个文件描述符
+    int socketPair[2];
     
 };
 
@@ -49,3 +53,17 @@ int eventLoopRun(struct EventLoop* evLoop);
 
 // 处理激活的文件fd
 int eventActivate(struct EventLoop* evLoop, int fd, int event);
+
+// 添加任务到任务队列
+int eventLoopAddTask(struct EventLoop* evLoop, struct Channel* channel, int type);
+
+// 处理任务队列中的任务
+int eventLoopProcessTask(struct EventLoop* evLoop);
+
+// 处理dispatcher中的节点
+int eventLoopAdd(struct EventLoop* evLoop, struct Channel* channel);
+int eventLoopRemove(struct EventLoop* evLoop, struct Channel* channel);
+int eventLoopModify(struct EventLoop* evLoop, struct Channel* channel);
+
+// 删除节点以后需要释放channel资源
+int destroyChannel(struct EventLoop* evLoop, struct Channel* channel);

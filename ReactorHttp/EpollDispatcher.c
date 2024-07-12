@@ -65,7 +65,7 @@ static int epollCtl(struct Channel* channel, struct EventLoop* evLoop, int op) {
 
 static int epollAdd (struct Channel* channel, struct EventLoop* evLoop) {
     
-    int ret = epoll_ctlepollCtl(channel, evLoop, EPOLL_CTL_ADD);
+    int ret = epollCtl(channel, evLoop, EPOLL_CTL_ADD);
     if (ret == -1) {
         perror("epollAdd\n");
         exit(0);
@@ -100,6 +100,7 @@ static int epollDispatch (struct EventLoop* evLoop, int timeout) { // timeout单
         if (events & EPOLLERR || events & EPOLLHUP) {
             // 对方断开了连接，删除fd
             // epollRemove(Channel, evloop);
+            continue;
         }
 
         if (events & EPOLLIN) { //读事件触发了
