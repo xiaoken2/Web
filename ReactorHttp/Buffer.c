@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/uio.h>
+#include <string.h>
 #include "Buffer.h"
 
 struct Buffer* bufferInit(int size) {
@@ -99,4 +100,28 @@ int bufferSocketRead(struct Buffer* buffer, int fd) {
     free(tmpbuf);
 
     return result;
+}
+
+char* bufferFindCRLF(struct Buffer* buffer) {
+    // strstr --> 大字符串中匹配子字符串(遇到\0结束) char *strstr(const char *haystack, const char *needle);
+    // memmem --> 大数据块中匹配子数据块(需要指定数据块大小)
+    // void *memmem(const void *haystack, size_t haystacklen,
+    //      const void* needle, size_t needlelen);
+
+    char* ptr = memmem(buffer->data+buffer->readPos, bufferReadableSize(buffer), "\r\n", 2);
+    return ptr;
+}
+
+int bufferSendData(struct Buffer* buffer, int socket) {
+    // 判断有无可读数据
+    int readable = bufferReadableSize(buffer);
+    if (readable > 0) {
+        int count = send(socket, buffer->data + buffer->readPos, readable, 0);
+        if (count) {
+            buffer->readPos += count;
+            usleep(1);
+        }
+        return count;
+    }
+    return 0;
 }

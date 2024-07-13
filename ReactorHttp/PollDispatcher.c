@@ -84,6 +84,8 @@ static int pollRemove (struct Channel* channel, struct EventLoop* evLoop) {
             break;
         }
     }
+    // 通过channel释放对应的TcpConnection资源
+    channel->destroyCallback(channel->arg);
     if (i >= Max) {
         return -1;
     }
