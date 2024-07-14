@@ -1,5 +1,10 @@
 #include <assert.h>
- #include <sys/socket.h>
+#include <sys/socket.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <pthread.h>
 
 #include "EventLoop.h"
 
@@ -27,7 +32,7 @@ struct EventLoop* eventLoopInitEx(const char* threadName) {
     evLoop->threadID = pthread_self();
     pthread_mutex_init(&evLoop->mutex, NULL);
     strcpy(evLoop->threadName, threadName == NULL ? "MainThread" : threadName);
-    evLoop->dispatcher = &EpollDispatcher;
+    evLoop->dispatcher = &SelectDispatcher;
     evLoop->dispatcherData = evLoop->dispatcher->init();
     // 初始化链表
     evLoop->head = evLoop->tail = NULL;
@@ -41,7 +46,7 @@ struct EventLoop* eventLoopInitEx(const char* threadName) {
         exit(0);
     }
     // 指定规则:evLoop->sockPair[0]为发送数据， evLoop->sockPair[1]为接收数据
-    struct Channel* channel = channelInit(evLoop->socketPair[1], ReadEvent, readLocalMessage, NULL, evLoop);
+    struct Channel* channel = channelInit(evLoop->socketPair[1], ReadEvent, readLocalMessage, NULL, NULL, evLoop);
 
     //将channel添加到任务队列中
     eventLoopAddTask(evLoop, channel, ADD);
@@ -54,7 +59,7 @@ int eventLoopRun(struct EventLoop* evLoop) {
     // 取出事件分发和检测模型
     struct Dispatcher* dispatcher = evLoop->dispatcher;
     // 比较线程ID是否正常
-    if (evLoop->threadID != pthread_self) {
+    if (evLoop->threadID != pthread_self()) {
         return -1;
     }
     // 循环进行事件处理
@@ -199,4 +204,3 @@ int destroyChannel(struct EventLoop* evLoop, struct Channel* channel) {
     free(channel);
     return 0;
 }
-

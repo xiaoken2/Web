@@ -5,7 +5,7 @@
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 
-#define MSG_SEND_AUTO
+// #define MSG_SEND_AUTO
 
 struct TcpConnection
 {
@@ -23,4 +23,4 @@ struct TcpConnection
 struct TcpConnection* tcpConnectionInit(int fd, struct EventLoop* evLoop);
 
 // 资源释放函数
-void tcpConnectionDestroy(struct TcpConnection* conn);
+int tcpConnectionDestroy(void*);

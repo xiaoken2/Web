@@ -1,6 +1,6 @@
 #pragma once
 #include "EventLoop.h"
-#include "ThreadPoll.h"
+#include "ThreadPool.h"
 
 struct Listener {
     int lfd;
@@ -9,9 +9,9 @@ struct Listener {
 
 struct TcpServer
 {
-    int ThreadNum;
+    int threadNum;
     struct EventLoop* mainLoop;
-    struct ThreadPoll*  threadPool;
+    struct ThreadPool*  threadPool;
     struct Listener* listener;
 };
 

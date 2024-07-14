@@ -1,13 +1,16 @@
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "TcpServer.h"
 #include "TcpConnection.h"
+#include "Log.h"
 
 struct TcpServer* tcpServerInit(unsigned short port, int threadNum) {
     struct TcpServer* tcp = (struct TcpServer*)malloc(sizeof(struct TcpServer));
     tcp->listener = listenerInit(port);
     tcp->mainLoop = eventLoopInit();
-    tcp->ThreadNum = threadNum;
-    tcp->threadPool = threadPollInit(tcp->mainLoop, threadNum);
+    tcp->threadNum = threadNum;
+    tcp->threadPool = threadPoolInit(tcp->mainLoop, threadNum);
 
     return tcp;
 }
@@ -18,14 +21,14 @@ struct Listener* listenerInit(unsigned short port) {
     int lfd = socket(AF_INET, SOCK_STREAM, 0); // IPV4的流式协议（TCP）
     if(lfd == -1){
         perror("socker");
-        return -1;
+        return NULL;
     }
     // 2. 设置端口复用
     int opt = 1;
     int ret = setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
     if (ret == -1) {
         perror("setsockopt");
-        return -1;
+        return NULL;
     }
     // 3. 绑定端口
     struct sockaddr_in addr;
@@ -37,13 +40,13 @@ struct Listener* listenerInit(unsigned short port) {
 
     if (ret == -1) {
         perror("bind");
-        return -1;
+        return NULL;
     }
     // 4. 设置监听
     ret = listen(lfd, 128);
     if (ret == -1) {
         perror("listen");
-        return -1;
+        return NULL;
     }
     listener->lfd = lfd;
     listener->port = port;
@@ -59,17 +62,18 @@ int acceptConnect(void* arg) {
 
     // 将cfd放到TcpConnection中处理
     tcpConnectionInit(cfd, evLoop);
+    return 0;
 
 }
 
 void tcpServerRun(struct TcpServer* server) {
+    Debug("程序已经启动了...");
     // 启动线程池
-    threadPollRun(server->threadPool);
+    threadPoolRun(server->threadPool);
     // 添加检测的任务
     // 初始化一个channel实例
-    struct Channel* channel = channelInit(server->listener->lfd, ReadEvent, acceptConnect, NULL, server);
+    struct Channel* channel = channelInit(server->listener->lfd, ReadEvent, acceptConnect, NULL, NULL, server);
     eventLoopAddTask(server->mainLoop, channel, ADD);
     // 启动反应堆模型
     eventLoopRun(server->mainLoop);
-
 }

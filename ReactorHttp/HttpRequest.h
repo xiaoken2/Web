@@ -41,13 +41,13 @@ void httpRequestResetEx(struct HttpRequest* req);
 void httpRequestDestroy(struct HttpRequest* req);
 
 // 获取处理状态的函数
-enum HttpRequestState HttpRequestState(struct HttpRequest* request);
+enum HttpRequestState httpRequestState(struct HttpRequest* request);
 
 // 添加请求头
-void HttpRequestAddHeader(struct HttpRequest* request, const char* key, const char* value);
+void httpRequestAddHeader(struct HttpRequest* request, const char* key, const char* value);
 
 // 根据key得到请求头的value
-char HttpRequestGetHeader(struct HttpRequest* request, const char* key);
+char* httpRequestGetHeader(struct HttpRequest* request, const char* key);
 
 // 解析请求行
 bool parseHttpRequestLine(struct HttpRequest* request, struct Buffer* readBuf);
@@ -70,6 +70,6 @@ void decodeMsg(char* to, char* from);
 const char* getFileType(const char* name);
 
 // 发送文件
-void sendFile(const char* fileName, int cfd);
+void sendFile(const char* fileName, struct Buffer* sendBuf, int cfd);
 // 发送目录
-void sendDir(const char* dirName, int cfd);
+void sendDir(const char* dirName, struct Buffer* sendBuf, int socket);

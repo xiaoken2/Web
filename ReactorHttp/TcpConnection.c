@@ -1,11 +1,15 @@
 #include "TcpConnection.h"
+#include "HttpRequest.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "Log.h"
 
 
 int processRead(void* arg) {
     struct TcpConnection* conn = (struct TcpConnection*)arg;
     // 接受数据
     int count = bufferSocketRead(conn->readBuf, conn->channel->fd);
-
+    Debug("接收到的http请求数据: %s", conn->readBuf->data + conn->readBuf->readPos);
     if (count > 0) {
         // 接受到了http请求，解析http请求
         int socket = conn->channel->fd;
@@ -20,14 +24,23 @@ int processRead(void* arg) {
             bufferAppendString(conn->writeBuf, errMsg);
         } 
     }
-#ifndef MSG_SEND_AUTO
+    else {
+#ifdef MSG_SEND_AUTO
     // 断开了连接
     eventLoopAddTask(conn->evLoop, conn->channel, DELETE);
 #endif
+    }
+#ifndef MSG_SEND_AUTO
+    // 断开连接
+    eventLoopAddTask(conn->evLoop, conn->channel, DELETE);
+#endif
+
+    return 0;
 
 }
 
 int processWrite(void* arg) {
+    Debug("开始发送数据了(基于写事件)...");
     struct TcpConnection* conn = (struct TcpConnection*)arg;
     // 发送数据
     int count = bufferSendData(conn->writeBuf, conn->channel->fd);
@@ -42,6 +55,7 @@ int processWrite(void* arg) {
             eventLoopAddTask(conn->evLoop, conn->channel, DELETE);
         }
     }
+    return 0;
 }
 
 struct TcpConnection* tcpConnectionInit(int fd, struct EventLoop* evLoop) {
@@ -57,11 +71,13 @@ struct TcpConnection* tcpConnectionInit(int fd, struct EventLoop* evLoop) {
     conn->channel = channelInit(fd, ReadEvent, processRead, processWrite, tcpConnectionDestroy, conn);
     eventLoopAddTask(evLoop, conn->channel, ADD); 
 
+    Debug("和客户端建立连接, threadName: %s, threadID: %lu, connName: %s", 
+    evLoop->threadName, (unsigned long)evLoop->threadID, conn->name);
     return conn;
 }
 
-int tcpConnectionDestroy(void*) {
-    struct TcpConnection* conn = (struct TcpConnection*)malloc(sizeof(struct TcpConnection));
+int tcpConnectionDestroy(void* arg) {
+    struct TcpConnection* conn = (struct TcpConnection*)arg;
     if (conn != NULL) {
         if (conn->readBuf && bufferReadableSize(conn->readBuf) == 0 && 
         conn->writeBuf && bufferReadableSize(conn->writeBuf) == 0) {
@@ -73,4 +89,6 @@ int tcpConnectionDestroy(void*) {
             free(conn);
         }
     }
+    Debug("连接断开, 释放资源, gameover, connName: %s", conn->name);
+    return 0;
 }

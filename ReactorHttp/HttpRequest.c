@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>
@@ -5,6 +6,9 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <ctype.h>
 
 #include "HttpRequest.h"
 
@@ -48,17 +52,17 @@ void httpRequestDestroy(struct HttpRequest* req) {
     }
 }
 
-enum HttpRequestState HttpRequestState(struct HttpRequest* request) {
+enum HttpRequestState httpRequestState(struct HttpRequest* request) {
     return request->curState;
 }
 
-void HttpRequestAddHeader(struct HttpRequest* request, const char* key, const char* value) {
-    request->reqHeaders[request->reqHeadersNum].key = key;
-    request->reqHeaders[request->reqHeadersNum].value = value;
+void httpRequestAddHeader(struct HttpRequest* request, const char* key, const char* value) {
+    request->reqHeaders[request->reqHeadersNum].key = (char*)key;
+    request->reqHeaders[request->reqHeadersNum].value = (char*)value;
     request->reqHeadersNum++;
 }
 
-char HttpRequestGetHeader(struct HttpRequest* request, const char* key) {
+char* httpRequestGetHeader(struct HttpRequest* request, const char* key) {
     if (request != NULL) {
         for (int i = 0; i < request->reqHeadersNum; ++i) {
             if (strncasecmp(request->reqHeaders[i].key, key, strlen(key)) == 0) {
@@ -150,13 +154,13 @@ bool parseHttpRequestHeader(struct HttpRequest* request, struct Buffer* readBuf)
             // key值拷贝
             char* key = malloc(middle - start + 1);
             strncpy(key, start, middle - start);
-            key[middle - start] = "\0";
+            key[middle - start] = '\0';
             // value值拷贝
             char* value = malloc(end - middle - 1);
             strncpy(value, middle + 2, end - middle - 2);
-            value[end - middle - 2] = "\0";
+            value[end - middle - 2] = '\0';
 
-            HttpRequestAddHeader(request, key, value);
+            httpRequestAddHeader(request, key, value);
             // 移动读数据的位置
             readBuf->readPos += lineSize;
             readBuf->readPos += 2;
@@ -204,7 +208,7 @@ struct HttpResponse* response, struct Buffer* sendBuf, int socket) {
         }
     }
     request->curState = ParseReqLine;  // 状态还原，保证能继续处理第二天及以后的请求
-    return false;
+    return flag;
 }
 
 // 处理基于get的http请求
@@ -277,7 +281,7 @@ void sendFile(const char* fileName, struct Buffer* sendBuf, int cfd) {
 #ifndef MSG_SEND_AUTO
             bufferSendData(sendBuf, cfd);
 #endif
-            usleep(10); // 防止发送端发送数据太快，接收端处理不过来造成堵塞
+            // usleep(10); // 防止发送端发送数据太快，接收端处理不过来造成堵塞
         } else if (len == 0) {
             break; 
         } else {
@@ -298,7 +302,6 @@ void sendFile(const char* fileName, struct Buffer* sendBuf, int cfd) {
     //     }
     // }
     close(fd);
-    return 0;
 }
 
 void sendDir(const char* dirName, struct Buffer* sendBuf, int socket) {
@@ -337,8 +340,10 @@ void sendDir(const char* dirName, struct Buffer* sendBuf, int socket) {
     sprintf(buf, "</table></body></html>");
     // send(cfd, buf, strlen(buf), 0);
     bufferAppendString(sendBuf, buf);
+#ifndef MSG_SEND_AUTO
+    bufferSendData(sendBuf, socket);
+#endif
     free(namelist);
-    return 0;
 }
 
 // 将字符转换为整形数

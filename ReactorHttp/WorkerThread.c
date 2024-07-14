@@ -4,7 +4,7 @@
 int workerThreadInit (struct WorkerThread* thread, int index) {
     thread->evLoop = NULL;
     thread->threadID = 0;
-    sprintf(thread->name, "Subthread-%d", index);
+    sprintf(thread->name, "SubThread-%d", index);
     pthread_mutex_init(&thread->mutex, NULL);
     pthread_cond_init(&thread->cond, NULL);
     return 0;
@@ -12,7 +12,7 @@ int workerThreadInit (struct WorkerThread* thread, int index) {
 
 
 // 子线程的回调函数
-void * subthreadRunning(void* arg) {
+void * subThreadRunning(void* arg) {
     struct WorkerThread* thread = (struct WorkerThread*)arg;
     pthread_mutex_lock(&thread->mutex);
     thread->evLoop = eventLoopInitEx(thread->name);
@@ -24,7 +24,7 @@ void * subthreadRunning(void* arg) {
 
 void workerThreadRun(struct WorkerThread* thread) {
     // 创建子线程
-    pthread_create(&thread->threadID, NULL, subthreadRunning, thread);
+    pthread_create(&thread->threadID, NULL, subThreadRunning, thread);
     // 阻塞主线程，让当前函数不会直接结束，因为要保证子线程的事件循环能够初始化成功
     //这里的共享资源是evLoop
     pthread_mutex_lock(&thread->mutex);

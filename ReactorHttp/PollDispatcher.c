@@ -1,5 +1,7 @@
 #include "Dispatcher.h"
 #include <poll.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define Max 1024
 
@@ -26,6 +28,7 @@ static int pollClear (struct EventLoop* evLoop);
 struct Dispatcher PollDispatcher = {
     pollInit,
     pollAdd,
+    pollRemove,
     pollModify,
     pollDispatch,
     pollClear
@@ -141,4 +144,5 @@ static int pollDispatch (struct EventLoop* evLoop, int timeout) { // timeoutå•ä
 static int pollClear (struct EventLoop* evLoop) {
     struct PollData* data = (struct PollData*)evLoop->dispatcherData;
     free(data);
+    return 0;
 }

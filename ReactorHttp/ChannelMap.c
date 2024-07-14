@@ -1,11 +1,13 @@
 #include "ChannelMap.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct ChannelMap* channelMapInit(int size) {
     struct ChannelMap* map = (struct ChannelMap*)malloc(sizeof(struct ChannelMap));
     map->size = size;
-    map->list = (struct ChannelMap**)malloc(size*sizeof(struct Channel*));
+    map->list = (struct Channel**)malloc(size*sizeof(struct Channel*));
     return map;
 }
 

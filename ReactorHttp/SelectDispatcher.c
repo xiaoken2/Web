@@ -1,6 +1,7 @@
 #include "Dispatcher.h"
 #include <sys/select.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define Max 1024
 
@@ -30,6 +31,7 @@ static void clearFdSet(struct Channel* channel, struct SelectData* data);
 struct Dispatcher SelectDispatcher = {
     selectInit,
     selectAdd,
+    selectRemove,
     selectModify,
     selectDispatch,
     selectClear
@@ -118,4 +120,5 @@ static int selectDispatch (struct EventLoop* evLoop, int timeout) { // timeoutå
 static int selectClear (struct EventLoop* evLoop) {
     struct SelectData* data = (struct SelectData*)evLoop->dispatcherData;
     free(data);
+    return 0;
 }

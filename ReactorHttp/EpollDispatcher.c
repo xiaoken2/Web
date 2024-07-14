@@ -1,5 +1,8 @@
 #include "Dispatcher.h"
 #include <sys/epoll.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #define Max 520
 
@@ -28,6 +31,7 @@ static int epollCtl(struct Channel* channel, struct EventLoop* evLoop, int op);
 struct Dispatcher EpollDispatcher = {
     epollInit,
     epollAdd,
+    epollRemove,
     epollModify,
     epollDispatch,
     epollClear
@@ -40,7 +44,7 @@ static void* epollInit() {
         perror("epoll_create");
         exit(0);
     }
-    data->events = (struct eopll_event*)calloc(Max, sizeof(struct epoll_event));
+    data->events = (struct epoll_event*)calloc(Max, sizeof(struct epoll_event));
 
     return data;
 
@@ -74,7 +78,7 @@ static int epollAdd (struct Channel* channel, struct EventLoop* evLoop) {
 }
 
 static int epollRemove (struct Channel* channel, struct EventLoop* evLoop) {
-    int ret = epoll_ctlepollCtl(channel, evLoop, EPOLL_CTL_DEL);
+    int ret = epollCtl(channel, evLoop, EPOLL_CTL_DEL);
     if (ret == -1) {
         perror("epollRemove\n");
         exit(0);
@@ -85,7 +89,7 @@ static int epollRemove (struct Channel* channel, struct EventLoop* evLoop) {
 }
 
 static int epollModify (struct Channel* channel, struct EventLoop* evLoop) {
-    int ret = epoll_ctlepollCtl(channel, evLoop, EPOLL_CTL_MOD);
+    int ret = epollCtl(channel, evLoop, EPOLL_CTL_MOD);
     if (ret == -1) {
         perror("epollMod\n");
         exit(0);
@@ -121,4 +125,5 @@ static int epollClear (struct EventLoop* evLoop) {
     close(data->epfd);
 
     free(data);
+    return 0;
 }

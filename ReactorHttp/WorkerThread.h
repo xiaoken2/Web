@@ -14,5 +14,5 @@ struct WorkerThread {
 // 初始化线程
 int workerThreadInit (struct WorkerThread* thread, int index);
 // 启动线程
-void workerThreadrun(struct WorkerThread* thread);
+void workerThreadRun(struct WorkerThread* thread);
 

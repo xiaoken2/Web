@@ -1,4 +1,5 @@
 #include "Channel.h"
+#include <stdlib.h>
 
 struct Channel* channelInit(int fd, int events, handleFunc readCallback, handleFunc writeCallback, 
 handleFunc destroyCallback, void* arg) {
@@ -24,4 +25,3 @@ void writeEventEnable(struct Channel* channel, bool flag) {
 bool isWriteEventEnable(struct Channel* channel) {
     return channel->events & WriteEvent;
 }
-

@@ -1,7 +1,12 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/uio.h>
+#include <strings.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+
 #include "Buffer.h"
 
 struct Buffer* bufferInit(int size) {
@@ -13,6 +18,7 @@ struct Buffer* bufferInit(int size) {
         buffer->readPos = buffer->writePos = 0;
         memset(buffer->data, 0, size);
     }
+    return buffer;
 }
 
 void bufferDestroy(struct Buffer* buffer) {
@@ -116,7 +122,7 @@ int bufferSendData(struct Buffer* buffer, int socket) {
     // 判断有无可读数据
     int readable = bufferReadableSize(buffer);
     if (readable > 0) {
-        int count = send(socket, buffer->data + buffer->readPos, readable, 0);
+        int count = send(socket, buffer->data + buffer->readPos, readable, MSG_NOSIGNAL);
         if (count) {
             buffer->readPos += count;
             usleep(1);
