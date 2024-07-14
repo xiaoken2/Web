@@ -197,6 +197,7 @@ int parseRequestLine(const char* line, int cfd) {
         // 文件不存在 --回复404
         sendHeadmsg(cfd, 404, "Not Found", getFileType(".html"), -1);
         sendFile("404.html", cfd);
+        return 0;
     }
     // 判断文件类型
     else if (S_ISDIR(st.st_mode)) {  // 如果是目录S_ISDIR()返回1，否则返回0
