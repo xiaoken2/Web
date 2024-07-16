@@ -1,9 +1,10 @@
 #pragma once
+#include <functional>
 
 
 // 定义函数指针
 // typedef int (*handleFunc) (void* arg);
-using handleFunc = int(*)(void*); // C++11新特性
+// using handleFunc = int(*)(void*); // C++11新特性
 
 // 定义文件描述符的读写事件
 enum class FDEvent {
@@ -12,11 +13,14 @@ enum class FDEvent {
     WriteEvent = 0x04
 };
 
+// 可调用对象包装器打包的是什么？1. 函数指针 2. 可调用对象（可以像函数一样使用）
+// 最终得到了地址,但是没有调用
 class Channel
 {
 public:
+    using handleFunc = std::function<int (void*)>;
     // 构造函数就是初始化
-    Channel (int fd, int events, handleFunc readCallback, handleFunc writeCallback, handleFunc destroyCallback, void* arg);
+    Channel (int fd, FDEvent events, handleFunc readCallback, handleFunc writeCallback, handleFunc destroyCallback, void* arg);
     // 回调函数
     handleFunc readCallback;
     handleFunc writeCallback;

@@ -7,7 +7,7 @@ using namespace std;
 #include "EventLoop.h"
 #include "Channel.h"
 
-struct EventLoop;
+class EventLoop;
 
 // 可以将Dispatcher的虚函数定义成纯虚函数，因为后面没有需要创建Dispatcher这个父类的实例的需求
 // 如果定义为纯虚函数，那么就不用给这个类中的虚函数结构体了；
@@ -24,7 +24,7 @@ public:
     // 修改
     virtual int modify();
     // 事件监测
-    virtual int dispatch(int timeout); // timeout单位 s
+    virtual int dispatch(int timeout = 2); // timeout单位 s
 
     inline void setChannel(Channel* channel) {
         m_channel = channel;

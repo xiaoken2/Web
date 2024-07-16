@@ -2,10 +2,10 @@
 #include <stdlib.h>
 
 
-Channel::Channel(int fd, int events, handleFunc readCallback, handleFunc writeCallback, handleFunc destroyCallback, void *arg)
+Channel::Channel(int fd, FDEvent events, handleFunc readCallback, handleFunc writeCallback, handleFunc destroyCallback, void *arg)
 {
     m_fd =fd;
-    m_events = events;
+    m_events = (int)events;
     m_arg = arg;
     readCallback = readCallback;
     writeCallback = writeCallback;

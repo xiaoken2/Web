@@ -1,22 +1,31 @@
 #pragma once
+#include <vector>
 #include "EventLoop.h"
-#include <stdbool.h>
 #include "WorkerThread.h"
 
+using namespace std;
 // 定义线程池
-struct ThreadPool
-{
-    // 主线程的反应堆模型
-    struct EventLoop* mainLoop;
-    bool isStart;
-    int threadNum;
-    struct WorkerThread* workerThreads;
-    int index;
-};
 
-// 初始化线程池
-struct ThreadPool* threadPoolInit(struct EventLoop* mainLoop, int count);
-// 启动线程池
-void threadPoolRun(struct ThreadPool* pool);
-// 取出线程池中的某个子线程的反应堆实例
-struct EventLoop* takeWorkerEventLoop(struct ThreadPool* pool);
+class ThreadPool
+{
+public:
+    // 初始化线程池
+    ThreadPool(struct EventLoop* mainLoop, int count);
+    ~ThreadPool();
+    // 启动线程池
+    void run();
+    // 取出线程池中的某个子线程的反应堆实例
+    EventLoop* takeWorkerEventLoop();
+
+    inline EventLoop* getMainLoop() {
+        return m_mainLoop;
+    }
+
+private:
+    // 主线程的反应堆模型
+    struct EventLoop* m_mainLoop;
+    bool m_isStart;
+    int m_threadNum;
+    vector<WorkerThread*> m_workerThreads;
+    int m_index;
+};
