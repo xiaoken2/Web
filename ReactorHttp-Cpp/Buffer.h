@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+using namespace std;
 
 class Buffer {
 public:
@@ -21,6 +23,7 @@ public:
         // 1.直接写 
     int appendString(const char* data, int size);
     int appendString(const char* data);
+    int appendString(const string data);
         // 2.接收套接字数据
     int socketRead(int fd);
 

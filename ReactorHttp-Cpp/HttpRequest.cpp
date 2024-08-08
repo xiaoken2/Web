@@ -147,7 +147,7 @@ bool HttpRequest::parseHttpRequest(Buffer *readBuf, HttpResponse *response, Buff
             // 1.根据解析的原始数据，对客户端的请求做出处理
             processHttpRequest(response);
             // 2. 组织响应数据并发送给客户端
-            httpResponsePrepareMsg(response, sendBuf, socket);
+            response->prepareMsg(sendBuf, socket);
         }
     }
     m_curState = PrecessState::ParseReqLine;  // 状态还原，保证能继续处理第二天及以后的请求
@@ -178,24 +178,22 @@ bool HttpRequest::processHttpRequest(HttpResponse *response)
         // sendHeadmsg(cfd, 404, "Not Found", getFileType(".html"), -1);
         // sendFile("404.html", cfd);
         // 状态行
-        strcpy(response->fileName, "404.html");
-        response->statuscode = NotFound;
-        strcpy(response->statusMsg, "Not Found");
+        response->setFileName("404.html");
+        response->setStateCode(StatusCode::NotFound);
         // 响应头
-        httpResponseAddHeader(response, "Content-type", getFileType(".html"));
+        response->addHeader("Content-type", getFileType(".html"));
         response->sendDataFunc = sendFile;
         return 0;
     }
     // 判断文件类型
-    strcpy(response->fileName, file);
-    response->statuscode = OK;
-    strcpy(response->statusMsg, "OK");
+    response->setFileName("file");
+    response->setStateCode(StatusCode::OK);
     if (S_ISDIR(st.st_mode)) {  // 如果是目录S_ISDIR()返回1，否则返回0
         // 把这个目录的内容发送给客户端
         // sendHeadmsg(cfd, 200, "OK", getFileType(".html"), -1);
         // sendDir(file, cfd);
         // 响应头
-        httpResponseAddHeader(response, "Content-type", getFileType(".html"));
+        response->addHeader("Content-type", getFileType(".html"));
         response->sendDataFunc = sendDir;
 
     } else {
@@ -203,10 +201,8 @@ bool HttpRequest::processHttpRequest(HttpResponse *response)
         // sendHeadmsg(cfd, 200, "Ok", getFileType(file), st.st_size);
         // sendFile(file, cfd);
         // 响应头
-        char tmp[12] = {0};
-        sprintf(tmp, "%ld", st.st_size);
-        httpResponseAddHeader(response, "Content-type", getFileType(file));
-        httpResponseAddHeader(response, "Content-length", tmp);
+        response->addHeader("Content-type", getFileType(file));
+        response->addHeader("Content-length", to_string(st.st_size));
         response->sendDataFunc = sendFile;
     }
     return false;

@@ -74,6 +74,12 @@ int Buffer::appendString(const char *data)
     return ret;
 }
 
+int Buffer::appendString(const string data)
+{
+    int ret = appendString(data.data());
+    return ret;
+}
+
 int Buffer::socketRead(int fd)
 {
     // read / recv / readv

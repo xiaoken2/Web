@@ -60,9 +60,9 @@ public:
     const string getFileType(const string name);
 
     // 发送文件
-    void sendFile(string fileName, Buffer* sendBuf, int cfd);
+    static void sendFile(string fileName, Buffer* sendBuf, int cfd);
     // 发送目录
-    void sendDir(string dirName, Buffer* sendBuf, int cfd);
+    static void sendDir(string dirName, Buffer* sendBuf, int cfd);
 
     inline void setMethod(string method) {
         m_method = method;

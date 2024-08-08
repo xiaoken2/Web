@@ -5,90 +5,89 @@
 #include "Log.h"
 
 
-int processRead(void* arg) {
-    struct TcpConnection* conn = (struct TcpConnection*)arg;
+int TcpConnection::processRead(void* arg) {
+    TcpConnection* conn = static_cast<TcpConnection*>(arg);
     // 接受数据
-    int count = bufferSocketRead(conn->readBuf, conn->channel->fd);
-    Debug("接收到的http请求数据: %s", conn->readBuf->data + conn->readBuf->readPos);
+    int socket = conn->m_channel->getSocket();
+    int count = conn->m_readBuf->socketRead(socket);
+    Debug("接收到的http请求数据: %s", conn->m_readBuf->data());
     if (count > 0) {
         // 接受到了http请求，解析http请求
-        int socket = conn->channel->fd;
 #ifdef MSG_SEND_AUTO
-        writeEventEnable(conn->channel, true);
-        eventLoopAddTask(conn->evLoop, conn->channel, MODIFY);
+        conn->m_channel->writeEventEnable(true);
+        conn->m_evLoop->addTask(conn->m_channel, ElemType::MODIFY);
 #endif
-        bool flag = parseHttpRequest(conn->request, conn->readBuf, conn->response, conn->writeBuf, socket);
+        bool flag = conn->m_request->parseHttpRequest(conn->m_readBuf, conn->m_response, conn->m_writeBuf, socket);
         if (!flag) {
             // 解析失败
-            char* errMsg = "Http/1.1 400 Bad Request\r\n\r\n";
-            bufferAppendString(conn->writeBuf, errMsg);
+            string errMsg = "Http/1.1 400 Bad Request\r\n\r\n";
+            conn->m_writeBuf->appendString(errMsg);
         } 
     }
     else {
 #ifdef MSG_SEND_AUTO
     // 断开了连接
-    eventLoopAddTask(conn->evLoop, conn->channel, DELETE);
+    conn->m_evLoop->addTask(conn->m_channel, ElemType::DELETE);
 #endif
     }
 #ifndef MSG_SEND_AUTO
     // 断开连接
-    eventLoopAddTask(conn->evLoop, conn->channel, DELETE);
+    conn->m_evLoop->addTask(conn->m_channel, ElemType::DELETE);
 #endif
 
     return 0;
 
 }
 
-int processWrite(void* arg) {
+int TcpConnection::processWrite(void* arg) {
     Debug("开始发送数据了(基于写事件)...");
-    struct TcpConnection* conn = (struct TcpConnection*)arg;
+    TcpConnection* conn = static_cast<TcpConnection*>(arg);
     // 发送数据
-    int count = bufferSendData(conn->writeBuf, conn->channel->fd);
+    int count = conn->m_writeBuf->sendData(conn->m_channel->getSocket());
 
     if (count > 0) {
-        if (bufferReadableSize(conn->writeBuf) == 0) {
+        if (conn->m_writeBuf->readableSize() == 0) {
             // 1. 不再检测写事件--修改channel中保存的事件
-            writeEventEnable(conn->channel, false);
+            conn->m_channel->writeEventEnable(false);
             // 2. 修改dispatcher检测的集合--添加任务节点
-            eventLoopAddTask(conn->evLoop, conn->channel, MODIFY);
+            conn->m_evLoop->addTask(conn->m_channel, ElemType::MODIFY);
             // 3. 删除这个节点
-            eventLoopAddTask(conn->evLoop, conn->channel, DELETE);
+            conn->m_evLoop->addTask(conn->m_channel, ElemType::DELETE);
         }
     }
     return 0;
 }
 
-struct TcpConnection* tcpConnectionInit(int fd, struct EventLoop* evLoop) {
-    struct TcpConnection* conn = (struct TcpConnection*)malloc(sizeof(struct TcpConnection));
+int TcpConnection::destroy(void* arg) {
+    TcpConnection* conn = static_cast<TcpConnection*>(arg);
+    if (conn != nullptr) {
+        delete conn;
+    }
+    return 0;
+}
 
-    conn->evLoop = evLoop;
-    conn->readBuf = bufferInit(10240);
-    conn->writeBuf = bufferInit(10240);
+TcpConnection::TcpConnection(int fd, EventLoop *evLoop)
+{
+    m_evLoop = evLoop;
+    m_readBuf = new Buffer(10240);
+    m_writeBuf = new Buffer(10240);
     // http
-    conn->request = httpRequestInit();
-    conn->response = httpResponseInit();
-    sprintf(conn->name, "Connection-%d", fd);
-    conn->channel = channelInit(fd, ReadEvent, processRead, processWrite, tcpConnectionDestroy, conn);
-    eventLoopAddTask(evLoop, conn->channel, ADD); 
-
-    Debug("和客户端建立连接, threadName: %s, threadID: %lu, connName: %s", 
-    evLoop->threadName, (unsigned long)evLoop->threadID, conn->name);
-    return conn;
+    m_request = new HttpRequest;
+    m_response = new HttpResponse;
+    m_name = "Connection-" + to_string(fd);
+    m_channel = new Channel(fd, FDEvent::ReadEvent, processRead, processWrite, destroy, this);
+    evLoop->addTask(m_channel, ElemType::ADD); 
 }
 
-int tcpConnectionDestroy(void* arg) {
-    struct TcpConnection* conn = (struct TcpConnection*)arg;
-    if (conn != NULL) {
-        if (conn->readBuf && bufferReadableSize(conn->readBuf) == 0 && 
-        conn->writeBuf && bufferReadableSize(conn->writeBuf) == 0) {
-            destroyChannel(conn->evLoop, conn->channel);
-            bufferDestroy(conn->readBuf);
-            bufferDestroy(conn->writeBuf);
-            httpRequestDestroy(conn->request);
-            httpResponseDestroy(conn->response);
-            free(conn);
-        }
+TcpConnection::~TcpConnection()
+{
+    if (m_readBuf && m_readBuf->readableSize() == 0 && 
+        m_writeBuf && m_writeBuf->readableSize() == 0) {
+            delete m_readBuf;
+            delete m_writeBuf;
+            delete m_request;
+            delete m_response;
+            m_evLoop->freeChannel(m_channel);
     }
-    Debug("连接断开, 释放资源, gameover, connName: %s", conn->name);
-    return 0;
+    Debug("连接断开, 释放资源, gameover, connName: %s", m_name);
 }
