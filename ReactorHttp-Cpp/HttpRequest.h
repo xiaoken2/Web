@@ -1,6 +1,7 @@
 #pragma once
-#include <stdbool.h>
 #include <sys/types.h>
+#include <map>
+
 #include "HttpResponse.h"
 #include "Buffer.h"
 #include "TcpConnection.h"
@@ -13,7 +14,7 @@ struct RequestHeader{
 };
 
 // 当前的解析状态
-enum HttpRequestState {
+enum class PrecessState:char{
     ParseReqLine,
     ParseReqHeaders,
     ParseReqBody,
@@ -21,55 +22,77 @@ enum HttpRequestState {
 };
 
 // 定义http请求结构体
-struct HttpRequest
+class HttpRequest
 {
-    char* method;
-    char* url;
-    char* version;
-    struct RequestHeader* reqHeaders;
-    int reqHeadersNum;
-    enum HttpRequestState curState;
+public:
+    
+    // 初始化
+    HttpRequest();
+    ~HttpRequest();
+
+    // 重置HttpRequest结构体
+    void reset();
+
+    // 添加请求头
+    void addHeader(const string key, const string value);
+
+    // 根据key得到请求头的value
+    string getHeader(const string key);
+
+    // 解析请求行
+    bool parseRequestLine(Buffer* readBuf);
+
+    // 解析请求头
+    bool parseRequestHeader(Buffer* readBuf);
+
+    // 解析http请求协议
+    bool parseHttpRequest(Buffer* readBuf,
+    HttpResponse* response, Buffer* sendBuf, int socket);
+
+    // 处理http请求
+    bool processHttpRequest(HttpResponse* response);
+
+    // 解码字符串，处理中文字符或者特殊字符
+    int hexToDec(char c);
+    string decodeMsg(string from);
+
+    // 得到对应文件格式的type
+    const string getFileType(const string name);
+
+    // 发送文件
+    void sendFile(string fileName, Buffer* sendBuf, int cfd);
+    // 发送目录
+    void sendDir(string dirName, Buffer* sendBuf, int cfd);
+
+    inline void setMethod(string method) {
+        m_method = method;
+    }
+
+    inline void setUrl(string url) {
+        m_url = url;
+    }
+
+    inline void setVersion(string version) {
+        m_version = version;
+    }
+
+        // 获取处理状态的函数
+    inline PrecessState getState() {
+        return m_curState;
+    }
+
+    // 修改处理状态
+    inline void setState(PrecessState state) {
+        m_curState = state;
+    }
+
+private:
+    char* splitRequestLine(const char* start, const char* end, 
+        const char* sub, function<void(string)> callback);
+private:
+    string m_method;
+    string m_url;
+    string m_version;
+    map<string, string> m_reqHeaders;
+    PrecessState m_curState;
 };
-
-// 初始化
-struct HttpRequest* httpRequestInit();
-
-// 重置HttpRequest结构体
-void httpRequestReset(struct HttpRequest* req);
-void httpRequestResetEx(struct HttpRequest* req);
-// 添加内存释放函数
-void httpRequestDestroy(struct HttpRequest* req);
-
-// 获取处理状态的函数
-enum HttpRequestState httpRequestState(struct HttpRequest* request);
-
-// 添加请求头
-void httpRequestAddHeader(struct HttpRequest* request, const char* key, const char* value);
-
-// 根据key得到请求头的value
-char* httpRequestGetHeader(struct HttpRequest* request, const char* key);
-
-// 解析请求行
-bool parseHttpRequestLine(struct HttpRequest* request, struct Buffer* readBuf);
-
-// 解析请求头
-bool parseHttpRequestHeader(struct HttpRequest* request, struct Buffer* readBuf);
-
-// 解析http请求协议
-bool parseHttpRequest(struct HttpRequest* request, struct Buffer* readBuf,
-struct HttpResponse* response, struct Buffer* sendBuf, int socket);
-
-// 处理http请求
-bool processHttpRequest(struct HttpRequest* request, struct HttpResponse* response);
-
-// 解码字符串，处理中文字符或者特殊字符
-int hexToDec(char c);
-void decodeMsg(char* to, char* from);
-
-// 得到对应文件格式的type
-const char* getFileType(const char* name);
-
-// 发送文件
-void sendFile(const char* fileName, struct Buffer* sendBuf, int cfd);
-// 发送目录
-void sendDir(const char* dirName, struct Buffer* sendBuf, int socket);

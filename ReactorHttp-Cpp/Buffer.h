@@ -1,33 +1,49 @@
 #pragma once
 
-struct Buffer {
+class Buffer {
+public:
+    // 初始化
+    Buffer (int size);
+    ~Buffer();
+
+    // 扩容
+    void extendRoom(int size);
+    // 得到的剩余的可写的内存容量
+    inline int writeableSize() {
+        return m_capacity -  m_writePos;
+    }
+    // 得到的剩余的可读的内存容量
+    inline int readableSize() {
+        return m_writePos - m_readPos;
+    }
+
+    // 写内存 
+        // 1.直接写 
+    int appendString(const char* data, int size);
+    int appendString(const char* data);
+        // 2.接收套接字数据
+    int socketRead(int fd);
+
+    // 根据\r\n取出一行， 找到其在数据块中的位置，返回该位置
+    char* findCRLF();
+
+    // 发送数据
+    int sendData(int socket);
+
+    // 得到读数据的起始位置
+    inline char* data () {
+        return m_data + m_readPos;
+    }
+
+    inline int readPosIncrease(int count) {
+        m_readPos += count;
+        return m_readPos;
+    }
+
+private:
     // 指向内存的指针
-    char* data;
-    int capacity;
-    int readPos;
-    int writePos;
+    char* m_data;  // 指向要写入数据的内存地址
+    int m_capacity;
+    int m_readPos = 0;
+    int m_writePos = 0;
 };
-
-// 初始化
-struct Buffer* bufferInit(int size);
-void bufferDestroy(struct Buffer* buffer);
-
-// 扩容
-void bufferExtendRoom(struct Buffer* buffer, int size);
-// 得到的剩余的可写的内存容量
-int bufferWriteableSize(struct Buffer* buffer);
-// 得到的剩余的可读的内存容量
-int bufferReadableSize(struct Buffer* buffer);
-
-// 写内存 
-    // 1.直接写 
-int bufferAppendData(struct Buffer* buffer, const char* data, int size);
-int bufferAppendString(struct Buffer* buffer, const char* data);
-    // 2.接收套接字数据
-int bufferSocketRead(struct Buffer* buffer, int fd);
-
-// 根据\r\n取出一行， 找到其在数据块中的位置，返回该位置
-char* bufferFindCRLF(struct Buffer* buffer);
-
-// 发送数据
-int bufferSendData(struct Buffer* buffer, int socket);

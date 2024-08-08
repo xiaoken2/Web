@@ -3,21 +3,26 @@
 #include "ThreadPool.h"
 
 struct Listener {
-    int lfd;
-    unsigned short port;
+
 };
 
-struct TcpServer
+class TcpServer
 {
-    int threadNum;
-    struct EventLoop* mainLoop;
-    struct ThreadPool*  threadPool;
-    struct Listener* listener;
+public:
+    // 初始化
+    TcpServer(unsigned short port, int ThreadNum);
+    // ~TcpServer();
+    // 初始化监听
+    void setLlistener();
+    // 启动服务器
+    void run();
+    static int acceptConnect(void* arg);
+private:
+    int m_threadNum;
+    EventLoop* m_mainLoop;
+    ThreadPool*  m_threadPool;
+    int m_lfd;
+    unsigned short m_port;
 };
 
-// 初始化
-struct TcpServer* tcpServerInit(unsigned short port, int ThreadNum);
-// 初始化监听
-struct Listener* listenerInit(unsigned short port);
-// 启动服务器
-void tcpServerRun(struct TcpServer* server);
+

@@ -5,75 +5,77 @@
 #include "TcpConnection.h"
 #include "Log.h"
 
-struct TcpServer* tcpServerInit(unsigned short port, int threadNum) {
-    struct TcpServer* tcp = (struct TcpServer*)malloc(sizeof(struct TcpServer));
-    tcp->listener = listenerInit(port);
-    tcp->mainLoop = eventLoopInit();
-    tcp->threadNum = threadNum;
-    tcp->threadPool = threadPoolInit(tcp->mainLoop, threadNum);
+TcpServer::TcpServer(unsigned short port, int threadNum)
+{
+    m_port = port;
+    m_threadNum = threadNum;
+    m_mainLoop = new EventLoop;
+    m_threadPool = new ThreadPool(m_mainLoop, threadNum);;
+    setLlistener();
 
-    return tcp;
 }
 
-struct Listener* listenerInit(unsigned short port) {
-    // 1. 创建监听的fd
-    struct Listener* listener = (struct Listener*)malloc(sizeof(struct Listener));
-    int lfd = socket(AF_INET, SOCK_STREAM, 0); // IPV4的流式协议（TCP）
-    if(lfd == -1){
+// TcpServer::~TcpServer()
+// {
+    
+// }
+
+void TcpServer::setLlistener()
+{
+    m_lfd = socket(AF_INET, SOCK_STREAM, 0); // IPV4的流式协议（TCP）
+    if(m_lfd == -1){
         perror("socker");
-        return NULL;
+        return;
     }
     // 2. 设置端口复用
     int opt = 1;
-    int ret = setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
+    int ret = setsockopt(m_lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
     if (ret == -1) {
         perror("setsockopt");
-        return NULL;
+        return;
     }
     // 3. 绑定端口
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;  // ipv4协议
-    addr.sin_port = htons(port);  // 绑定的端口, 把端口从小端转换成大端
+    addr.sin_port = htons(m_port);  // 绑定的端口, 把端口从小端转换成大端
     addr.sin_addr.s_addr = INADDR_ANY;  // 绑定的ip地址（0地址）
 
-    ret = bind(lfd, (struct sockaddr*)&addr, sizeof addr);
+    ret = bind(m_lfd, (struct sockaddr*)&addr, sizeof addr);
 
     if (ret == -1) {
         perror("bind");
-        return NULL;
+        return;
     }
     // 4. 设置监听
-    ret = listen(lfd, 128);
+    ret = listen(m_lfd, 128);
     if (ret == -1) {
         perror("listen");
-        return NULL;
+        return;
     }
-    listener->lfd = lfd;
-    listener->port = port;
-    return listener;
 }
 
-int acceptConnect(void* arg) {
-    struct TcpServer* server = (struct TcpServer*)arg;
+void TcpServer::run()
+{
+    Debug("程序已经启动了...");
+    // 启动线程池
+    m_threadPool->run();
+    // 添加检测的任务
+    // 初始化一个channel实例
+    Channel* channel = new Channel(m_lfd, FDEvent::ReadEvent, acceptConnect, nullptr, nullptr, this);
+    m_mainLoop->addTask(channel, ElemType::ADD);
+    // 启动反应堆模型
+    m_mainLoop->run();
+}
+
+int TcpServer::acceptConnect(void *arg)
+{
+    TcpServer* server = static_cast<TcpServer*>(arg);
     // 和客户端建立连接
-    int cfd = accept(server->listener->lfd, NULL, NULL);  // 第二参数为连接的客户端的端口和ip地址，不需要这些信息的时候为NULL，第三个参数为第二个参数的结构体大小
+    int cfd = accept(server->m_lfd, nullptr, nullptr);  // 第二参数为连接的客户端的端口和ip地址，不需要这些信息的时候为NULL，第三个参数为第二个参数的结构体大小
     // 从线程池里面取出子线程的反应堆实例
-    struct EventLoop* evLoop =  takeWorkerEventLoop(server->threadPool);
+    EventLoop* evLoop = server->m_threadPool->takeWorkerEventLoop();
 
     // 将cfd放到TcpConnection中处理
     tcpConnectionInit(cfd, evLoop);
     return 0;
-
-}
-
-void tcpServerRun(struct TcpServer* server) {
-    Debug("程序已经启动了...");
-    // 启动线程池
-    threadPoolRun(server->threadPool);
-    // 添加检测的任务
-    // 初始化一个channel实例
-    struct Channel* channel = channelInit(server->listener->lfd, ReadEvent, acceptConnect, NULL, NULL, server);
-    eventLoopAddTask(server->mainLoop, channel, ADD);
-    // 启动反应堆模型
-    eventLoopRun(server->mainLoop);
 }
