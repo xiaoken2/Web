@@ -4,24 +4,24 @@ cmake_minimum_required(VERSION 3.10)
 project(ReactorHttp)
 
 # 设置 C 标准
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
 
 # 添加源文件
 set(SOURCE_FILES
-    Buffer.c
-    Channel.c
-    ChannelMap.c
-    EpollDispatcher.c
-    EventLoop.c
-    HttpRequest.c
-    HttpResponse.c
-    main.c
-    PollDispatcher.c
-    SelectDispatcher.c
-    TcpConnection.c
-    TcpServer.c
-    ThreadPool.c
-    WorkerThread.c
+    Buffer.cpp
+    Channel.cpp
+    ChannelMap.cpp
+    EpollDispatcher.cpp
+    EventLoop.cpp
+    HttpRequest.cpp
+    HttpResponse.cpp
+    main.cpp
+    PollDispatcher.cpp
+    SelectDispatcher.cpp
+    TcpConnection.cpp
+    TcpServer.cpp
+    ThreadPool.cpp
+    WorkerThread.cpp
 )
 
 # 添加头文件目录
