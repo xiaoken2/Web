@@ -24,7 +24,7 @@ int Dispatcher::modify()
     return 0;
 }
 
-int Dispatcher::dispatch(int timeout = 2)
+int Dispatcher::dispatch(int timeout)
 {
     return 0;
 }

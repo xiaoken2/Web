@@ -3,18 +3,6 @@
 #include <stdlib.h>
 #include "ThreadPool.h"
 
-struct ThreadPool* threadPoolInit(struct EventLoop* mainLoop, int count) {
-
-}
-
-void threadPoolRun(struct ThreadPool* pool) {
-
-}
-
-struct EventLoop* takeWorkerEventLoop(struct ThreadPool* pool) {
-
-}
-
 ThreadPool::ThreadPool(EventLoop *mainLoop, int count)
 {
     m_index = 0;
@@ -34,7 +22,7 @@ ThreadPool::~ThreadPool()
 void ThreadPool::run()
 {
     // 判断主线程是不是没有运行
-    assert(m_isStart);
+    assert(!m_isStart);
     // 判断是不是主线程
     if (m_mainLoop->getThreadID() != thread::id()) {
         exit(0);

@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(SOURCE_FILES
     Buffer.cpp
     Channel.cpp
-    ChannelMap.cpp
+    Dispatcher.cpp
     EpollDispatcher.cpp
     EventLoop.cpp
     HttpRequest.cpp

@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+// #define _GNU_SOURCE
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>
@@ -325,7 +325,7 @@ void HttpRequest::sendDir(string dirName, Buffer *sendBuf, int cfd)
         char* name = namelist[i]->d_name;
         struct stat st;
         char subPath[1024] = {0};
-        sprintf(subPath, "%s/%s", dirName, name);
+        sprintf(subPath, "%s/%s", dirName.data(), name);
         stat(subPath, &st);
 
         if (S_ISDIR(st.st_mode)) {

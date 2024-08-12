@@ -2,10 +2,12 @@
 #include "EventLoop.h"
 #include "Channel.h"
 #include "Buffer.h"
-#include "HttpRequest.h"
+// #include "HttpRequest.h"
 #include "HttpResponse.h"
 
 // #define MSG_SEND_AUTO
+
+class HttpRequest;
 
 class TcpConnection
 {

@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+// #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/uio.h>
@@ -44,7 +44,7 @@ void Buffer::extendRoom(int size)
         if (temp == NULL) {
             return;
         }
-        memset(temp + m_capacity, 0 ,size);
+        memset((char*)temp + m_capacity, 0 ,size);
         // m_data = (char*)temp;
         m_data = static_cast<char*>(temp);
         m_capacity += size;
