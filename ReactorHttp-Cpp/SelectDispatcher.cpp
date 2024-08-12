@@ -57,11 +57,11 @@ int SelectDispatcher::dispatch(int timeout)
     for (int i = 0; i < m_maxSize; ++i) {
         if (FD_ISSET(i, &rdtmp)) {
             // 读事件
-            eventActivate(evLoop, i, ReadEvent);
+            m_evLoop->eventActivate(i, (int)FDEvent::ReadEvent);
         }
         if (FD_ISSET(i, &wrtmp)) {
             // 写事件触发
-            eventActivate(evLoop, i, WriteEvent);
+            m_evLoop->eventActivate(i, (int)FDEvent::WriteEvent);
         }
     }
     return 0;

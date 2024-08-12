@@ -103,11 +103,12 @@ int PollDispatcher::dispatch(int timeout)
         }
         if (m_fds[i].revents & POLLIN) {
             // 读事件触发
-            eventActivate(evLoop, m_fds[i].fd, (int)FDEvent:: ReadEvent);
+            m_evLoop->eventActivate(m_fds[i].fd, (int)FDEvent:: ReadEvent);
+
         }
         if (m_fds[i].revents & POLLOUT) {
             // 写事件
-            eventActivate(evLoop, m_fds[i].fd, (int)FDEvent:: WriteEvent);
+            m_evLoop->eventActivate(m_fds[i].fd, (int)FDEvent:: WriteEvent);
         }
     }
     return 0;

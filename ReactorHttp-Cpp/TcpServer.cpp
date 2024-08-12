@@ -76,6 +76,6 @@ int TcpServer::acceptConnect(void *arg)
     EventLoop* evLoop = server->m_threadPool->takeWorkerEventLoop();
 
     // 将cfd放到TcpConnection中处理
-    tcpConnectionInit(cfd, evLoop);
+    TcpConnection* conn = new TcpConnection(cfd, evLoop);
     return 0;
 }
