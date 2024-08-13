@@ -2,14 +2,14 @@
 #include <stdlib.h>
 
 
-Channel::Channel(int fd, FDEvent events, handleFunc readCallback, handleFunc writeCallback, handleFunc destroyCallback, void *arg)
+Channel::Channel(int fd, FDEvent events, handleFunc readFunc, handleFunc writeFunc, handleFunc destroyFunc, void *arg)
 {
     m_fd =fd;
     m_events = (int)events;
     m_arg = arg;
-    readCallback = readCallback;
-    writeCallback = writeCallback;
-    destroyCallback = destroyCallback;
+    readCallback = readFunc;
+    writeCallback = writeFunc;
+    destroyCallback = destroyFunc;
 
 }
 

@@ -15,7 +15,6 @@ EpollDispatcher::EpollDispatcher(EventLoop *evLoop) : Dispatcher(evLoop)
     // m_events = (struct epoll_event*)calloc(Max, sizeof(struct epoll_event));
     m_events = new struct epoll_event[m_maxNode];
     m_name = "Epool";
-
 }
 
 EpollDispatcher::~EpollDispatcher()

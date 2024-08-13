@@ -71,13 +71,13 @@ bool HttpRequest::parseRequestLine(Buffer *readBuf)
     int LineSize = end - start;
 
     
-    if (LineSize) {
+    if (LineSize > 0) {
         auto methodFunc = bind(&HttpRequest::setMethod, this, placeholders::_1);
         start = splitRequestLine(start, end, " ", methodFunc);
         auto urlFunc = bind(&HttpRequest::setUrl, this, placeholders::_1);
         start = splitRequestLine(start, end, " ", urlFunc);
         auto versionFunc = bind(&HttpRequest::setVersion, this, placeholders::_1);
-        splitRequestLine(start, end, NULL, versionFunc);
+        splitRequestLine(start, end, nullptr, versionFunc);
 
         // 为请求头做准备
         readBuf->readPosIncrease(LineSize + 2); 
@@ -88,6 +88,7 @@ bool HttpRequest::parseRequestLine(Buffer *readBuf)
     }
     return false;
 }
+
 
 bool HttpRequest::parseRequestHeader(Buffer *readBuf)
 {
@@ -186,7 +187,7 @@ bool HttpRequest::processHttpRequest(HttpResponse *response)
         return 0;
     }
     // 判断文件类型
-    response->setFileName("file");
+    response->setFileName(file);
     response->setStateCode(StatusCode::OK);
     if (S_ISDIR(st.st_mode)) {  // 如果是目录S_ISDIR()返回1，否则返回0
         // 把这个目录的内容发送给客户端
@@ -282,6 +283,7 @@ void HttpRequest::sendFile(string fileName, Buffer *sendBuf, int cfd)
 {
     int fd = open(fileName.data(), O_RDONLY);
     assert(fd > 0);
+#if 1
     while (1) {
         char buf[1024];
         int len = read(fd, buf, sizeof buf);
@@ -300,17 +302,18 @@ void HttpRequest::sendFile(string fileName, Buffer *sendBuf, int cfd)
         }
 
     }
-
-    // off_t offset = 0;
-    // int size = lseek(fd, 0, SEEK_END);
-    // lseek(fd, 0, SEEK_SET);
-    // while (offset < size) {
-    //     int ret = sendfile(cfd, fd, &offset, size);
-    //     printf("%d\n", ret);
-    //     if (ret == -1) {
-    //         perror("sendfile");
-    //     }
-    // }
+#else
+    off_t offset = 0;
+    int size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    while (offset < size) {
+        int ret = sendfile(cfd, fd, &offset, size);
+        printf("%d\n", ret);
+        if (ret == -1) {
+            perror("sendfile");
+        }
+    }
+#endif
     close(fd);
 }
 
@@ -365,3 +368,4 @@ int HttpRequest::hexToDec(char c)
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
     return 0;
 }
+

@@ -15,10 +15,6 @@ TcpServer::TcpServer(unsigned short port, int threadNum)
 
 }
 
-// TcpServer::~TcpServer()
-// {
-    
-// }
 
 void TcpServer::setLlistener()
 {

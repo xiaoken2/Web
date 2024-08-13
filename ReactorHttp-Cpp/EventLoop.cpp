@@ -117,7 +117,7 @@ int EventLoop::addTask(Channel *channel, ElemType type)
 int EventLoop::processTaskQ()
 {
     // 取出头结点
-    while (m_taskQ.empty()) {
+    while (!m_taskQ.empty()) {
         m_mutex.lock();
         ChannelElement* node = m_taskQ.front();
         m_taskQ.pop();

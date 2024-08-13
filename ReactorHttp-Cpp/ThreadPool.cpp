@@ -1,9 +1,8 @@
-#include <stdio.h>
+#include "ThreadPool.h"
 #include <assert.h>
 #include <stdlib.h>
-#include "ThreadPool.h"
 
-ThreadPool::ThreadPool(EventLoop *mainLoop, int count)
+ThreadPool::ThreadPool(EventLoop* mainLoop, int count)
 {
     m_index = 0;
     m_isStart = false;
@@ -14,23 +13,24 @@ ThreadPool::ThreadPool(EventLoop *mainLoop, int count)
 
 ThreadPool::~ThreadPool()
 {
-    for (auto item : m_workerThreads) {
-        delete(item);
+    for (auto item : m_workerThreads)
+    {
+        delete item;
     }
 }
 
 void ThreadPool::run()
 {
-    // 判断主线程是不是没有运行
     assert(!m_isStart);
-    // 判断是不是主线程
-    if (m_mainLoop->getThreadID() != thread::id()) {
+    if (m_mainLoop->getThreadID() != this_thread::get_id())
+    {
         exit(0);
     }
-
     m_isStart = true;
-    if (m_threadNum > 0) {
-        for (int i = 0; i < m_threadNum; ++i) {
+    if (m_threadNum > 0)
+    {
+        for (int i = 0; i < m_threadNum; ++i)
+        {
             WorkerThread* subThread = new WorkerThread(i);
             subThread->run();
             m_workerThreads.push_back(subThread);
@@ -38,22 +38,19 @@ void ThreadPool::run()
     }
 }
 
-EventLoop *ThreadPool::takeWorkerEventLoop()
+EventLoop* ThreadPool::takeWorkerEventLoop()
 {
-    // 判断主线程是不是在运行
     assert(m_isStart);
-    // 判断是不是主线程
-    if (m_mainLoop->getThreadID() != thread::id()) {
+    if (m_mainLoop->getThreadID() != this_thread::get_id())
+    {
         exit(0);
     }
-
-    // 从线程池中找到一个子线程，取出里面的反应堆模型
+    // 从线程池中找一个子线程, 然后取出里边的反应堆实例
     EventLoop* evLoop = m_mainLoop;
-    if (m_threadNum) {
+    if (m_threadNum > 0)
+    {
         evLoop = m_workerThreads[m_index]->getEventLoop();
         m_index = ++m_index % m_threadNum;
     }
-
     return evLoop;
-    return nullptr;
 }

@@ -5,6 +5,7 @@ project(ReactorHttp)
 
 # 设置 C 标准
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE Debug)
 
 # 添加源文件
 set(SOURCE_FILES
